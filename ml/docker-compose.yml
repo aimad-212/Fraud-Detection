@@ -1,0 +1,48 @@
+
+
+services:
+  ml-training:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraud-detection-ml-training
+    volumes:
+      - ../training:/app/training:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./experiments:/app/experiments
+    environment:
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
+      - KAGGLE_KEY=${KAGGLE_KEY:-}
+      - PYTHONPATH=/app
+    working_dir: /app
+    command: ["python", "training/train_fraud_model.py"]
+    networks:
+      - fraud-detection-network
+
+  ml-jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraud-detection-ml-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../training:/app/training:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./experiments:/app/experiments
+    environment:
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
+      - KAGGLE_KEY=${KAGGLE_KEY:-}
+      - PYTHONPATH=/app
+    working_dir: /app
+    command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+    networks:
+      - fraud-detection-network
+    profiles:
+      - jupyter
+
+networks:
+  fraud-detection-network:
+    driver: bridge
