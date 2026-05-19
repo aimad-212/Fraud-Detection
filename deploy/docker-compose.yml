@@ -1,0 +1,77 @@
+name: fraud-detection
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fraud-detection-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fraud-detection
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraud_user -d fraud_detection"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: fraud-detection-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command:
+      [
+        "--jetstream",
+        "--store_dir",
+        "/data",
+        "--http_port",
+        "8222",
+        "-m",
+        "8222",
+      ]
+    networks:
+      - fraud-detection
+
+  fraud-detection:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: fraud-detection-app
+    environment:
+      - PORT=${PORT:-8080}
+      - GIN_MODE=${GIN_MODE:-release}
+      - DB_TYPE=${DB_TYPE:-postgres}
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-fraud_detection}
+      - DB_USER=${DB_USER:-fraud_user}
+      - DB_PASSWORD=${DB_PASSWORD:-fraud_password}
+      - DB_SSLMODE=${DB_SSLMODE:-disable}
+      - NATS_ENABLED=${NATS_ENABLED:-true}
+      - NATS_URL=${NATS_URL:-nats://nats:4222}
+      - NATS_SUBJECT=${NATS_SUBJECT:-transactions}
+      - NATS_QUEUE_GROUP=${NATS_QUEUE_GROUP:-fraud-processor}
+      - MONITORING_ENABLED=${MONITORING_ENABLED:-true}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fraud-detection
+    volumes:
+      - ../configs:/app/configs:ro
+
+volumes:
+  postgres_data:
+
+networks:
+  fraud-detection:
+    driver: bridge

@@ -1,0 +1,100 @@
+# Fraud Detection Rules Configuration
+# This file defines the rules used for fraud detection
+rules:
+  # Amount-based Rules
+  - id: "high_amount"
+    name: "High Amount Transaction"
+    description: "Flags transactions above $5000"
+    type: "amount"
+    severity: "high"
+    enabled: true
+    parameters:
+      max_amount: 5000.0
+
+  - id: "very_high_amount"
+    name: "Very High Amount Transaction"
+    description: "Blocks transactions above $10000"
+    type: "amount"
+    severity: "critical"
+    enabled: true
+    parameters:
+      max_amount: 10000.0
+
+  # Velocity Rules
+  - id: "rapid_transactions"
+    name: "Rapid Transactions"
+    description: "Flags 5+ transactions per hour"
+    type: "velocity"
+    severity: "high"
+    enabled: true
+    parameters:
+      max_transactions: 5
+      time_window: "1h"
+
+  - id: "excessive_daily_transactions"
+    name: "Excessive Daily Transactions"
+    description: "Flags 50+ transactions per day"
+    type: "velocity"
+    severity: "medium"
+    enabled: true
+    parameters:
+      max_transactions: 50
+      time_window: "24h"
+
+  # Geographic Rules
+  - id: "blocked_countries"
+    name: "Blocked Countries"
+    description: "Blocks transactions from high-risk countries"
+    type: "geographic"
+    severity: "critical"
+    enabled: true
+    parameters:
+      blocked_countries: ["KP", "IR", "SY", "AF"]
+
+  - id: "international_high_amount"
+    name: "International High Amount"
+    description: "Flags international transactions above $2000"
+    type: "geographic"
+    severity: "medium"
+    enabled: true
+    parameters:
+      max_amount: 2000.0
+      blocked_countries: ["US"]  # Block domestic to make this international-only rule
+
+  # Merchant Rules
+  - id: "suspicious_merchants"
+    name: "Suspicious Merchants"
+    description: "Flags transactions with suspicious merchants"
+    type: "merchant"
+    severity: "high"
+    enabled: true
+    parameters:
+      suspicious_merchants: ["fake-store", "test-merchant", "suspicious-vendor", "high-risk-vendor"]
+
+  - id: "high_risk_categories"
+    name: "High Risk Categories"
+    description: "Flags transactions in high-risk categories"
+    type: "merchant"
+    severity: "medium"
+    enabled: true
+    parameters:
+      high_risk_categories: ["gambling", "crypto", "adult"]
+
+  # Time-based Rules
+  - id: "unusual_hours"
+    name: "Unusual Hours"
+    description: "Flags transactions during unusual hours (2 AM - 5 AM)"
+    type: "time"
+    severity: "medium"
+    enabled: true
+    parameters:
+      blocked_hours: [2, 3, 4, 5]
+
+  - id: "weekend_high_amount"
+    name: "Weekend High Amount"
+    description: "Flags high amount transactions on weekends"
+    type: "time"
+    severity: "low"
+    enabled: true
+    parameters:
+      weekend_days: [6, 0]  # Saturday=6, Sunday=0

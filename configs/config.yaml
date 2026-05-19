@@ -1,0 +1,103 @@
+# Fraud Detection Service Configuration
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+  mode: release  # debug, release, test
+
+
+logging:
+  level: info  # debug, info, warn, error
+  format: json  # json, console
+
+database:
+  type: memory  # memory, postgres, mysql
+  # PostgreSQL settings (when type is postgres)
+  host: localhost
+  port: 5432
+  database: fraud_detection
+  username: fraud_user
+  password: fraud_password
+  sslmode: disable
+  max_open_conns: 25
+  max_idle_conns: 25
+  conn_max_lifetime: 5m
+
+redis:
+  enabled: true
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+  # Cache settings
+  cache:
+    user_features_ttl: 30m
+    transaction_ttl: 60m
+    global_stats_ttl: 5m
+    user_history_ttl: 15m
+    warmup_enabled: true
+    cleanup_interval: 10m
+    max_memory_usage: 104857600  # 100MB in bytes
+
+fraud_detection:
+  # Risk score thresholds
+  high_risk_threshold: 0.8
+  medium_risk_threshold: 0.5
+
+  # Rule-based detection settings
+  max_amount_threshold: 5000.0
+  suspicious_merchants:
+    - "suspicious-merchant"
+    - "high-risk-vendor"
+
+  # Feature engineering settings
+  enable_geolocation: false
+  enable_device_fingerprinting: false
+
+  # ML Integration Configuration
+  ml:
+    # Model Configuration
+    enabled: true
+    model_path: "./models/fraud-detection-xgb-1.0.0.pkl"
+    model_type: "mock"
+    model_version: "1.0.0"
+    fallback_to_rules: true
+
+    # Hybrid Decision Configuration
+    rule_weight: 0.6
+    ml_weight: 0.4
+    enable_dynamic_weights: false
+
+    # Decision thresholds
+    approve_threshold: 0.3
+    flag_threshold: 0.7
+    reject_threshold: 0.9
+
+    # Feature engineering
+    feature_vector_size: 20
+    enable_feature_cache: true
+    feature_cache_ttl: "300s"
+
+    # Performance settings
+    max_concurrent_predictions: 100
+    prediction_timeout: "5s"
+
+monitoring:
+  enabled: true
+  prometheus_port: 9090
+  metrics_path: "/metrics"
+
+# External service integrations
+kafka:
+  enabled: false
+  brokers:
+    - localhost:9092
+  topic: transactions
+
+nats:
+  enabled: false
+  url: nats://localhost:4222
+  subject: transactions
+  queue_group: fraud-processor
+  max_reconnect: 5
+  reconnect_wait: 2s
